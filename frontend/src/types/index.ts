@@ -71,9 +71,7 @@ export interface KeyBreakdown {
 export interface AlertRule {
   id: string;
   type: string;
-  threshold: number;
-  provider: string | null;
-  key_id: string | null;
+  key_id: string;
   notify_email: string;
   is_active: boolean;
 }
@@ -82,7 +80,6 @@ export interface AlertEvent {
   id: string;
   rule_id: string;
   triggered_at: string;
-  threshold_pct: number;
   message: string;
   is_read: boolean;
   email_sent: boolean;

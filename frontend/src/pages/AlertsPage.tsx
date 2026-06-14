@@ -12,14 +12,16 @@ export default function AlertsPage() {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  // Form state
-  const [formType, setFormType] = useState('budget');
-  const [formThreshold, setFormThreshold] = useState('');
-  const [formProvider, setFormProvider] = useState('');
   const [formKeyId, setFormKeyId] = useState('');
   const [formNotifyEmail, setFormNotifyEmail] = useState(user?.email ?? '');
   const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
+
+  // Map key_id -> label for display
+  const keyLabel = useCallback(
+    (keyId: string) => keys.find((k) => k.id === keyId)?.label ?? keyId.slice(0, 8) + '...',
+    [keys],
+  );
 
   const fetchData = useCallback(async () => {
     try {
@@ -39,9 +41,7 @@ export default function AlertsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   async function handleCreateRule(e: React.FormEvent) {
     e.preventDefault();
@@ -49,18 +49,11 @@ export default function AlertsPage() {
     setFormLoading(true);
     try {
       await apiClient.post('/alerts/rules', {
-        type: formType,
-        threshold: parseFloat(formThreshold),
-        provider: formProvider || null,
-        key_id: formKeyId || null,
+        key_id: formKeyId,
         notify_email: formNotifyEmail,
       });
       setShowModal(false);
-      setFormType('budget');
-      setFormThreshold('');
-      setFormProvider('');
       setFormKeyId('');
-      setFormNotifyEmail(user?.email ?? '');
       fetchData();
     } catch (err: unknown) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
@@ -83,9 +76,7 @@ export default function AlertsPage() {
 
   async function handleToggleRule(rule: AlertRule) {
     try {
-      await apiClient.patch(`/alerts/rules/${rule.id}`, {
-        is_active: !rule.is_active,
-      });
+      await apiClient.patch(`/alerts/rules/${rule.id}`, { is_active: !rule.is_active });
       fetchData();
     } catch (err: unknown) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
@@ -97,9 +88,7 @@ export default function AlertsPage() {
     try {
       await apiClient.patch(`/alerts/events/${eventId}/read`);
       fetchData();
-    } catch {
-      // silently ignore
-    }
+    } catch { /* ignore */ }
   }
 
   const emailNotVerified = !!(user && !user.email_verified);
@@ -116,6 +105,7 @@ export default function AlertsPage() {
     <div className="page-container">
       {error && <div className="alert alert-error">{error}</div>}
 
+      {/* Alert Rules */}
       <div className="section-header">
         <h2 className="section-title">Alert Rules</h2>
         <button
@@ -139,7 +129,7 @@ export default function AlertsPage() {
           <div className="empty-state-icon">!</div>
           <div className="empty-state-title">No Alert Rules</div>
           <div className="empty-state-desc">
-            Create alert rules to get notified when your usage exceeds thresholds.
+            Create alert rules to get notified when a key stops working.
           </div>
           {!emailNotVerified && (
             <button className="btn btn-primary" onClick={() => setShowModal(true)}>
@@ -153,9 +143,7 @@ export default function AlertsPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th>Threshold</th>
-                  <th>Scope</th>
+                  <th>Key</th>
                   <th>Notify</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -164,13 +152,7 @@ export default function AlertsPage() {
               <tbody>
                 {rules.map((rule) => (
                   <tr key={rule.id}>
-                    <td>
-                      <span className="badge badge-accent">{rule.type}</span>
-                    </td>
-                    <td style={{ fontFamily: 'var(--font-mono)' }}>
-                      {rule.type === 'budget' ? `$${rule.threshold.toFixed(2)}` : rule.threshold.toLocaleString()}
-                    </td>
-                    <td>{rule.provider ?? rule.key_id ? `${rule.provider ?? ''} ${rule.key_id ? `(${rule.key_id.slice(0, 8)}...)` : ''}` : 'Global'}</td>
+                    <td>{keyLabel(rule.key_id)}</td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{rule.notify_email}</td>
                     <td>
                       <span className={`badge ${rule.is_active ? 'badge-success' : 'badge-default'}`}>
@@ -195,7 +177,7 @@ export default function AlertsPage() {
         </div>
       )}
 
-      {/* Recent Events */}
+      {/* Alert Events */}
       <div className="section-header mt-24">
         <h2 className="section-title">Recent Alert Events</h2>
       </div>
@@ -214,7 +196,7 @@ export default function AlertsPage() {
                 <tr>
                   <th>Message</th>
                   <th>Triggered</th>
-                  <th>Threshold %</th>
+                  <th>Email</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -223,20 +205,14 @@ export default function AlertsPage() {
                 {events.map((evt) => (
                   <tr key={evt.id}>
                     <td style={{ maxWidth: 300 }}>{evt.message}</td>
-                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                    <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
                       {new Date(evt.triggered_at).toLocaleString()}
                     </td>
-                    <td style={{ fontFamily: 'var(--font-mono)' }}>{evt.threshold_pct}%</td>
-                    <td>
-                      <span className={`badge ${evt.is_read ? 'badge-default' : 'badge-warning'}`}>
-                        {evt.is_read ? 'Read' : 'Unread'}
-                      </span>
-                    </td>
+                    <td><span className={`badge ${evt.email_sent ? 'badge-success' : 'badge-default'}`}>{evt.email_sent ? 'Sent' : 'No'}</span></td>
+                    <td><span className={`badge ${evt.is_read ? 'badge-default' : 'badge-warning'}`}>{evt.is_read ? 'Read' : 'Unread'}</span></td>
                     <td>
                       {!evt.is_read && (
-                        <button className="btn btn-ghost btn-sm" onClick={() => handleMarkRead(evt.id)}>
-                          Mark Read
-                        </button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => handleMarkRead(evt.id)}>Mark Read</button>
                       )}
                     </td>
                   </tr>
@@ -251,42 +227,16 @@ export default function AlertsPage() {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Create Alert Rule</h2>
+            <h2>Create Key Health Alert</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 16 }}>
+              Get notified when this API key stops working.
+            </p>
             {formError && <div className="alert alert-error">{formError}</div>}
             <form onSubmit={handleCreateRule}>
               <div className="form-group">
-                <label className="form-label">Type</label>
-                <select className="form-select" value={formType} onChange={(e) => setFormType(e.target.value)}>
-                  <option value="budget">Budget (USD)</option>
-                  <option value="call_count">Call Count</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Threshold</label>
-                <input
-                  className="form-input"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={formThreshold}
-                  onChange={(e) => setFormThreshold(e.target.value)}
-                  placeholder={formType === 'budget' ? 'e.g. 10.00' : 'e.g. 1000'}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Provider Scope (optional)</label>
-                <input
-                  className="form-input"
-                  value={formProvider}
-                  onChange={(e) => setFormProvider(e.target.value)}
-                  placeholder="e.g. openai (leave empty for all)"
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Key Scope (optional)</label>
-                <select className="form-select" value={formKeyId} onChange={(e) => setFormKeyId(e.target.value)}>
-                  <option value="">All keys</option>
+                <label className="form-label">API Key</label>
+                <select className="form-select" value={formKeyId} onChange={(e) => setFormKeyId(e.target.value)} required>
+                  <option value="">Select a key...</option>
                   {keys.map((k) => (
                     <option key={k.id} value={k.id}>{k.label} ({k.provider})</option>
                   ))}
@@ -294,18 +244,10 @@ export default function AlertsPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Notification Email</label>
-                <input
-                  className="form-input"
-                  type="email"
-                  value={formNotifyEmail}
-                  onChange={(e) => setFormNotifyEmail(e.target.value)}
-                  required
-                />
+                <input className="form-input" type="email" value={formNotifyEmail} onChange={(e) => setFormNotifyEmail(e.target.value)} required />
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                  Cancel
-                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={formLoading}>
                   {formLoading ? 'Creating...' : 'Create Rule'}
                 </button>

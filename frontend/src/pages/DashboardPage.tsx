@@ -1,52 +1,34 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
-} from 'recharts';
 import apiClient from '../api/client';
-import type { UsageSummary, UsageTrendPoint, KeyBreakdown } from '../types';
-
-const COLORS = ['#5e6ad2', '#30a46c', '#f5a623', '#e5484d', '#6b6b6b', '#8b5cf6', '#06b6d4'];
+import type { ApiKey, AlertEvent, KeyShare } from '../types';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const [summary, setSummary] = useState<UsageSummary | null>(null);
-  const [trend, setTrend] = useState<UsageTrendPoint[]>([]);
-  const [topKeys, setTopKeys] = useState<KeyBreakdown[]>([]);
+  const [keys, setKeys] = useState<ApiKey[]>([]);
+  const [alerts, setAlerts] = useState<AlertEvent[]>([]);
+  const [received, setReceived] = useState<KeyShare[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [summaryRes, trendRes, keysRes] = await Promise.all([
-          apiClient.get<UsageSummary>('/usage/summary'),
-          apiClient.get<UsageTrendPoint[]>('/usage/trend'),
-          apiClient.get<KeyBreakdown[]>('/usage/by-key'),
+        const [keysRes, alertsRes, sharesRes] = await Promise.all([
+          apiClient.get<ApiKey[]>('/keys'),
+          apiClient.get<AlertEvent[]>('/alerts/events', { params: { unread_only: true } }),
+          apiClient.get<KeyShare[]>('/team/shares', { params: { direction: 'received' } }),
         ]);
-        setSummary(summaryRes.data);
-        setTrend(trendRes.data);
-        setTopKeys(keysRes.data.slice(0, 10));
-      } catch (err: unknown) {
-        const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-        setError(detail ?? 'Failed to load usage data.');
+        setKeys(keysRes.data);
+        setAlerts(alertsRes.data);
+        setReceived(sharesRes.data);
+      } catch {
+        // Silently handle — dashboard shows empty states
       } finally {
         setLoading(false);
       }
     }
     fetchData();
   }, []);
-
-  function formatCost(n: number): string {
-    return `$${n.toFixed(4)}`;
-  }
-
-  function formatNumber(n: number): string {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-    return n.toLocaleString();
-  }
 
   if (loading) {
     return (
@@ -56,194 +38,170 @@ export default function DashboardPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="page-container">
-        <div className="alert alert-error">{error}</div>
-      </div>
-    );
-  }
-
-  const hasData = summary && (summary.total_calls > 0 || summary.total_cost > 0);
-
-  if (!hasData) {
-    return (
-      <div className="page-container">
-        <div className="empty-state">
-          <div className="empty-state-icon">#</div>
-          <div className="empty-state-title">Add your first API Key to see usage data</div>
-          <div className="empty-state-desc">
-            Once you add an API key, we will start tracking calls, tokens, and costs for you.
-          </div>
-          <button className="btn btn-primary" onClick={() => navigate('/keys')}>
-            Go to Keys
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const pieData = summary!.by_provider.map((p) => ({
-    name: p.provider,
-    value: p.cost,
-  }));
+  const okKeys = keys.filter((k) => k.status === 'ok');
+  const errorKeys = keys.filter((k) => k.status === 'error');
+  const ownedKeys = keys.filter((k) => k.permission === null);
+  const sharedKeys = keys.filter((k) => k.permission !== null);
 
   return (
     <div className="page-container">
-      {/* Summary Cards */}
+      <h2 className="section-title">Dashboard</h2>
+
+      {/* Stat cards */}
       <div className="stat-grid">
-        <div className="stat-card">
-          <div className="stat-label">Total Calls</div>
-          <div className="stat-value">{formatNumber(summary!.total_calls)}</div>
+        <div className="stat-card" onClick={() => navigate('/keys')} style={{ cursor: 'pointer' }}>
+          <div className="stat-label">Your Keys</div>
+          <div className="stat-value">{ownedKeys.length}</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-label">Total Tokens</div>
-          <div className="stat-value">{formatNumber(summary!.total_tokens)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Total Cost</div>
+        <div className="stat-card" onClick={() => navigate('/alerts')} style={{ cursor: 'pointer' }}>
+          <div className="stat-label">Key Health</div>
           <div className="stat-value">
-            {formatCost(summary!.total_cost)}
-            <span className="stat-unit">this month</span>
+            <span style={{ color: errorKeys.length > 0 ? 'var(--danger)' : 'var(--success)' }}>
+              {errorKeys.length > 0 ? `${errorKeys.length} broken` : 'All OK'}
+            </span>
           </div>
+        </div>
+        <div className="stat-card" onClick={() => navigate('/team')} style={{ cursor: 'pointer' }}>
+          <div className="stat-label">Shared With You</div>
+          <div className="stat-value">{received.length}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Unread Alerts</div>
+          <div className="stat-value">{alerts.length}</div>
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="charts-grid">
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Cost by Provider</span>
-          </div>
-          <div className="chart-container">
-            {pieData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {pieData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number) => formatCost(value)}
-                    contentStyle={{
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: 'var(--radius)',
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
-                No provider data yet
-              </div>
-            )}
-            {summary!.by_provider.length > 0 && (
-              <div className="flex-row flex-wrap gap-8" style={{ justifyContent: 'center', marginTop: 8 }}>
-                {summary!.by_provider.map((p, i) => (
-                  <div key={p.provider} className="flex-row gap-8" style={{ fontSize: 12 }}>
-                    <span style={{
-                      width: 10, height: 10, borderRadius: 2,
-                      background: COLORS[i % COLORS.length], display: 'inline-block',
-                    }} />
-                    <span style={{ color: 'var(--text-secondary)' }}>{p.provider}</span>
-                    <span style={{ fontFamily: 'var(--font-mono)' }}>{formatCost(p.cost)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Usage Trend (Calls)</span>
-          </div>
-          <div className="chart-container">
-            {trend.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={trend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                  <XAxis
-                    dataKey="period"
-                    tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
-                    axisLine={{ stroke: 'var(--border-color)' }}
-                  />
-                  <YAxis
-                    tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
-                    axisLine={{ stroke: 'var(--border-color)' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: 'var(--radius)',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="calls"
-                    stroke={COLORS[0]}
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, fill: COLORS[0] }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
-                No trend data yet
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Quick actions */}
+      <div className="flex-row gap-12 mb-24" style={{ marginTop: 24 }}>
+        <button className="btn btn-primary" onClick={() => navigate('/keys')}>
+          Manage Keys
+        </button>
+        <button className="btn btn-secondary" onClick={() => navigate('/alerts')}>
+          View Alerts
+        </button>
+        <button className="btn btn-secondary" onClick={() => navigate('/team')}>
+          Team Sharing
+        </button>
       </div>
 
-      {/* Top Keys */}
-      <div className="card">
-        <div className="card-header">
-          <span className="card-title">Top Keys by Cost</span>
-        </div>
-        {topKeys.length > 0 ? (
+      {/* Key list preview — show error keys first */}
+      {errorKeys.length > 0 && (
+        <div className="card mb-24">
+          <div className="card-header">
+            <span className="card-title" style={{ color: 'var(--danger)' }}>
+              Keys Needing Attention
+            </span>
+          </div>
           <div className="table-container">
             <table>
               <thead>
                 <tr>
-                  <th>Key</th>
+                  <th>Label</th>
                   <th>Provider</th>
-                  <th>Calls</th>
-                  <th>Tokens</th>
-                  <th>Cost</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {topKeys.map((k) => (
-                  <tr key={k.key_id} className="clickable" onClick={() => navigate(`/keys/${k.key_id}`)}>
-                    <td>{k.key_label}</td>
+                {errorKeys.map((k) => (
+                  <tr key={k.id} className="clickable" onClick={() => navigate(`/keys/${k.id}`)}>
+                    <td>{k.label}</td>
                     <td>{k.provider}</td>
-                    <td>{formatNumber(k.calls)}</td>
-                    <td>{formatNumber(k.tokens)}</td>
-                    <td style={{ fontFamily: 'var(--font-mono)' }}>{formatCost(k.cost)}</td>
+                    <td><span className="badge badge-danger">Error</span></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        ) : (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
-            No key data yet
+        </div>
+      )}
+
+      {/* All keys overview */}
+      {keys.length > 0 && (
+        <div className="card mb-24">
+          <div className="card-header">
+            <span className="card-title">All Keys</span>
+            <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
+              {okKeys.length}/{keys.length} healthy
+            </span>
           </div>
-        )}
-      </div>
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Label</th>
+                  <th>Provider</th>
+                  <th>Access</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {keys.map((k) => (
+                  <tr key={k.id} className="clickable" onClick={() => navigate(`/keys/${k.id}`)}>
+                    <td>{k.label}</td>
+                    <td>{k.provider}</td>
+                    <td>
+                      <span className="badge badge-default" style={{ fontSize: 10 }}>
+                        {k.permission === null ? 'Owner' : k.permission}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`badge ${k.status === 'ok' ? 'badge-success' : 'badge-danger'}`}>
+                        {k.status === 'ok' ? 'OK' : 'Error'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {keys.length === 0 && (
+        <div className="empty-state">
+          <div className="empty-state-icon">+</div>
+          <div className="empty-state-title">Welcome to API Vault</div>
+          <div className="empty-state-desc">
+            Add your first API key to start monitoring, sharing, and getting alerts.
+          </div>
+          <button className="btn btn-primary" onClick={() => navigate('/keys')}>
+            Add Your First Key
+          </button>
+        </div>
+      )}
+
+      {/* Recent alerts */}
+      {alerts.length > 0 && (
+        <div className="card mt-24">
+          <div className="card-header">
+            <span className="card-title">Recent Alerts ({alerts.length} unread)</span>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/alerts')}>
+              View All
+            </button>
+          </div>
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Message</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {alerts.slice(0, 5).map((a) => (
+                  <tr key={a.id}>
+                    <td style={{ fontSize: 13 }}>{a.message}</td>
+                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: 11, whiteSpace: 'nowrap' }}>
+                      {new Date(a.triggered_at).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
