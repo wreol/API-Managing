@@ -206,7 +206,7 @@ class KeyService:
     # Test connection
     # ------------------------------------------------------------------
     async def test_key(self, *, user: User, key_id: uuid.UUID) -> dict:
-        api_key = await self._get_owned_key(user, key_id)
+        api_key = await self._get_key_or_shared(user, key_id)
 
         enc_svc = _get_encryption_service()
         try:
