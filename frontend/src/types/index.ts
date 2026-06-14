@@ -6,14 +6,35 @@ export interface User {
   email_verified: boolean;
 }
 
+export interface TokenResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  user: User;
+}
+
 export interface ApiKey {
   id: string;
   provider: string;
   label: string;
   masked_key: string;
   tags: string[];
-  status: 'ok' | 'needs_update' | 'error';
-  created_at: string;
+  status: string;
+  is_active: boolean;
+}
+
+export interface KeyDetail {
+  id: string;
+  provider: string;
+  label: string;
+  masked_key: string;
+  tags: string[] | null;
+  is_active: boolean;
+  status: string;
+}
+
+export interface KeyCopyResponse {
+  key_value: string;
 }
 
 export interface UsageSummary {
@@ -28,11 +49,19 @@ export interface ProviderUsage {
   calls: number;
   tokens: number;
   cost: number;
-  percentage: number;
 }
 
 export interface UsageTrendPoint {
-  date: string;
+  period: string;
+  calls: number;
+  tokens: number;
+  cost: number;
+}
+
+export interface KeyBreakdown {
+  key_id: string;
+  key_label: string;
+  provider: string;
   calls: number;
   tokens: number;
   cost: number;
@@ -40,10 +69,10 @@ export interface UsageTrendPoint {
 
 export interface AlertRule {
   id: string;
-  key_id: string | null;
-  provider: string | null;
-  type: 'budget' | 'call_count';
+  type: string;
   threshold: number;
+  provider: string | null;
+  key_id: string | null;
   notify_email: string;
   is_active: boolean;
 }
@@ -55,20 +84,19 @@ export interface AlertEvent {
   threshold_pct: number;
   message: string;
   is_read: boolean;
+  email_sent: boolean;
 }
 
 export interface KeyShare {
   id: string;
   key_id: string;
-  shared_by: string;
-  shared_with: string;
-  permission: 'read' | 'use';
-  created_at: string;
+  shared_by_email: string;
+  shared_with_email: string;
+  permission: string;
 }
 
 export interface ProviderInfo {
   name: string;
   label: string;
   is_custom: boolean;
-  auth_type: string;
 }
