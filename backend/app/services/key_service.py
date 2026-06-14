@@ -62,22 +62,46 @@ class KeyService:
         )
 
     # ------------------------------------------------------------------
-    # List (active only)
+    # List (active only; includes shared keys)
     # ------------------------------------------------------------------
     async def list_keys(self, *, user: User) -> list[KeyResponse]:
-        result = await self.db.execute(
+        # Owned active keys
+        owned_result = await self.db.execute(
             select(ApiKey).where(
                 and_(ApiKey.user_id == user.id, ApiKey.is_active == True)
             )
         )
-        keys = result.scalars().all()
+        owned_keys = list(owned_result.scalars().all())
+
+        # Keys shared with this user (only active, non-deleted keys)
+        shared_result = await self.db.execute(
+            select(ApiKey)
+            .join(KeyShare, KeyShare.key_id == ApiKey.id)
+            .where(
+                and_(
+                    KeyShare.shared_with == user.id,
+                    ApiKey.is_active == True,
+                )
+            )
+        )
+        shared_keys = list(shared_result.scalars().all())
+
+        # Combine and deduplicate (a user shouldn't see duplicates, but
+        # a key could theoretically be both owned and shared)
+        seen_ids = set()
+        all_keys = []
+        for k in owned_keys + shared_keys:
+            if k.id not in seen_ids:
+                seen_ids.add(k.id)
+                all_keys.append(k)
+
         return [
             KeyResponse(
                 id=str(k.id),
                 label=k.label,
                 masked_key=EncryptionService.mask_key(k.key_prefix, k.last_4),
             )
-            for k in keys
+            for k in all_keys
         ]
 
     # ------------------------------------------------------------------
