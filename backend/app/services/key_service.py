@@ -63,30 +63,63 @@ class KeyService:
         )
 
     # ------------------------------------------------------------------
-    # List (active only; owned keys only — shared keys live in /team)
+    # List (active; owned + shared keys, with permission tag)
     # ------------------------------------------------------------------
     async def list_keys(self, *, user: User) -> list[KeyResponse]:
+        enc_svc = _get_encryption_service()
+
+        # Owned keys
         owned_result = await self.db.execute(
             select(ApiKey).where(
                 and_(ApiKey.user_id == user.id, ApiKey.is_active == True)
             )
         )
-        all_keys = list(owned_result.scalars().all())
+        owned_keys = list(owned_result.scalars().all())
 
-        return [
-            KeyResponse(
-                id=str(k.id),
-                label=k.label,
-                masked_key=EncryptionService.mask_key(k.key_prefix, k.last_4),
+        # Keys shared with this user
+        shared_result = await self.db.execute(
+            select(ApiKey, KeyShare.permission)
+            .join(KeyShare, KeyShare.key_id == ApiKey.id)
+            .where(
+                and_(
+                    KeyShare.shared_with == user.id,
+                    ApiKey.is_active == True,
+                )
             )
-            for k in all_keys
-        ]
+        )
+        shared_rows = shared_result.all()
+
+        result = []
+        seen = set()
+
+        for k in owned_keys:
+            result.append(KeyResponse(
+                id=str(k.id),
+                provider=k.provider,
+                label=k.label,
+                masked_key=enc_svc.mask_key(k.key_prefix, k.last_4),
+                permission=None,  # owner
+            ))
+            seen.add(k.id)
+
+        for k, perm in shared_rows:
+            if k.id not in seen:
+                result.append(KeyResponse(
+                    id=str(k.id),
+                    provider=k.provider,
+                    label=k.label,
+                    masked_key=enc_svc.mask_key(k.key_prefix, k.last_4),
+                    permission=perm,  # "read" or "use"
+                ))
+                seen.add(k.id)
+
+        return result
 
     # ------------------------------------------------------------------
     # Get detail
     # ------------------------------------------------------------------
     async def get_key(self, *, user: User, key_id: uuid.UUID) -> KeyDetailResponse:
-        api_key = await self._get_owned_key(user, key_id)
+        api_key = await self._get_key_or_shared(user, key_id)
         return KeyDetailResponse(
             id=str(api_key.id),
             provider=api_key.provider,
@@ -121,10 +154,12 @@ class KeyService:
 
         return KeyResponse(
             id=str(api_key.id),
+            provider=api_key.provider,
             label=api_key.label,
             masked_key=EncryptionService.mask_key(
                 api_key.key_prefix, api_key.last_4
             ),
+            permission=None,
         )
 
     # ------------------------------------------------------------------
@@ -151,7 +186,7 @@ class KeyService:
     # Copy (decrypt, return to "clipboard")
     # ------------------------------------------------------------------
     async def copy_key(self, *, user: User, key_id: uuid.UUID) -> KeyCopyResponse:
-        api_key = await self._get_owned_key(user, key_id)
+        api_key = await self._get_key_or_shared(user, key_id, require_use=True)
 
         enc_svc = _get_encryption_service()
         try:
@@ -193,4 +228,36 @@ class KeyService:
         api_key = result.scalar_one_or_none()
         if api_key is None:
             raise HTTPException(status_code=404, detail="API key not found")
+        return api_key
+
+    async def _get_share_permission(self, user: User, key_id: uuid.UUID) -> str | None:
+        """Return share permission ('read'/'use') if key is shared with user, else None."""
+        result = await self.db.execute(
+            select(KeyShare.permission).where(
+                and_(KeyShare.key_id == key_id, KeyShare.shared_with == user.id)
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def _get_key_or_shared(self, user: User, key_id: uuid.UUID, require_use: bool = False) -> ApiKey:
+        """Get key by ownership or share permission. Raises 404 if no access."""
+        api_key = await self.db.execute(
+            select(ApiKey).where(ApiKey.id == key_id)
+        )
+        api_key = api_key.scalar_one_or_none()
+
+        if api_key is None:
+            raise HTTPException(status_code=404, detail="API key not found")
+
+        # Owner has full access
+        if api_key.user_id == user.id:
+            return api_key
+
+        # Check share permission
+        perm = await self._get_share_permission(user, key_id)
+        if perm is None:
+            raise HTTPException(status_code=404, detail="API key not found")
+        if require_use and perm != "use":
+            raise HTTPException(status_code=403, detail="You only have read access to this key")
+
         return api_key

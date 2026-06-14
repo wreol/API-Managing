@@ -109,12 +109,15 @@ export default function KeysPage() {
                   <th>Label</th>
                   <th>Provider</th>
                   <th>Key</th>
+                  <th>Access</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {keys.map((key) => (
+                {keys.map((key) => {
+                  const isOwner = key.permission === null;
+                  return (
                   <tr key={key.id}>
                     <td>
                       <span
@@ -127,6 +130,11 @@ export default function KeysPage() {
                     <td>{key.provider}</td>
                     <td><span className="masked-key">{key.masked_key}</span></td>
                     <td>
+                      <span className={`badge ${isOwner ? 'badge-accent' : key.permission === 'use' ? 'badge-success' : 'badge-default'}`}>
+                        {isOwner ? 'Owner' : key.permission === 'use' ? 'Can use' : 'Read only'}
+                      </span>
+                    </td>
+                    <td>
                       <span className={`badge ${key.status === 'ok' ? 'badge-success' : key.status === 'error' ? 'badge-danger' : 'badge-warning'}`}>
                         {key.status}
                       </span>
@@ -136,13 +144,15 @@ export default function KeysPage() {
                         <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/keys/${key.id}`)}>
                           Details
                         </button>
-                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(key.id)}>
-                          Delete
-                        </button>
+                        {isOwner && (
+                          <button className="btn btn-danger btn-sm" onClick={() => handleDelete(key.id)}>
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

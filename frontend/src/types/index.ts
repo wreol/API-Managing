@@ -21,6 +21,7 @@ export interface ApiKey {
   tags: string[];
   status: string;
   is_active: boolean;
+  permission: string | null;
 }
 
 export interface KeyDetail {

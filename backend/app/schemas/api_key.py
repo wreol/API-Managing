@@ -27,8 +27,10 @@ class UpdateKeyRequest(BaseModel):
 # ---------------------------------------------------------------------------
 class KeyResponse(BaseModel):
     id: str
+    provider: str
     label: str
     masked_key: str
+    permission: str | None = None  # None = owner, "read" = view only, "use" = full access
 
     model_config = {"from_attributes": True}
 
