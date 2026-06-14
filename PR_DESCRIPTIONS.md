@@ -1,7 +1,3 @@
-# PR 创建指南
-
-> 每个 feature branch 在 GitHub 网页端创建一个 Pull Request，复制下方对应描述。
-
 ---
 
 ## PR #1: Phase 1 — Backend Core Infrastructure
