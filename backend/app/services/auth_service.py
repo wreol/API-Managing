@@ -98,7 +98,7 @@ class AuthService:
             email=email,
             password_hash=hash_password(password),
             display_name=display_name,
-            email_verified=False,
+            email_verified=True,
         )
         self.db.add(user)
         await self.db.flush()
