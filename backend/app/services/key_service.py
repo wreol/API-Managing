@@ -219,6 +219,11 @@ class KeyService:
             result = await provider.test_connection(decrypted)
         except KeyError:
             result = {"status": "error", "message": f"Unknown provider: {api_key.provider}"}
+
+        # Update key status based on test result
+        api_key.status = "ok" if result.get("status") == "ok" else "error"
+        await self.db.flush()
+
         result["provider"] = api_key.provider
         return result
 
