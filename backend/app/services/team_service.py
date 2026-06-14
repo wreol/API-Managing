@@ -69,7 +69,11 @@ class TeamService:
                 detail="This key is already shared with this user",
             )
 
-        # 5. Create the share
+        # 5. Look up key info for the response
+        result = await self.db.execute(select(ApiKey).where(ApiKey.id == key_id))
+        api_key = result.scalar_one_or_none()
+
+        # 6. Create the share
         share = KeyShare(
             id=uuid.uuid4(),
             key_id=key_id,
@@ -83,6 +87,9 @@ class TeamService:
         return ShareResponse(
             id=str(share.id),
             key_id=str(share.key_id),
+            key_label=api_key.label if api_key else "unknown",
+            key_provider=api_key.provider if api_key else "unknown",
+            masked_key=f"{api_key.key_prefix}...****{api_key.last_4}" if api_key else "unknown",
             shared_by_email=user.email,
             shared_with_email=target_user.email,
             permission=share.permission,
