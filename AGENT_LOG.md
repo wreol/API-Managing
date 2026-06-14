@@ -34,3 +34,18 @@
 | **代码审查** | ✅ 通过 (2 critical: server_default/model mismatch causing autogenerate noise; 3 important: index gaps) |
 | **人工修改** | 无 |
 | **教训** | `server_default` vs `default` 必须在 migration 和 model 中一致，否则 `autogenerate` 持续产生噪声 |
+
+### Task 2.2: Auth Service
+
+| 项目 | 详情 |
+|------|------|
+| **时间** | 2026-06-14 |
+| **Branch** | `feature/phase-2-auth` |
+| **Superpowers 技能** | `subagent-driven-development` |
+| **Subagent** | Implementer (sonnet) |
+| **Commit** | `ff41b33` |
+| **测试** | 79 (14 new auth + 65 existing) |
+| **Spec 审查** | ✅ PASS - 4 endpoints fully compliant |
+| **代码审查** | 2 Critical (JWT secret default, password strength), 7 Important (timing leak, rate limiting, token revocation) |
+| **人工修改** | 无 |
+| **教训** | SQLite in-memory 测试数据库策略很好地隔离了测试；password_hash NULL 检查导致登录时机侧信道泄漏 |
