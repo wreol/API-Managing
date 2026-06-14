@@ -26,6 +26,9 @@ class UpdateSharePermissionRequest(BaseModel):
 class ShareResponse(BaseModel):
     id: str
     key_id: str
+    key_label: str
+    key_provider: str
+    masked_key: str
     shared_by_email: str
     shared_with_email: str
     permission: str

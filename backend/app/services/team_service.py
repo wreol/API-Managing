@@ -181,9 +181,18 @@ class TeamService:
         )
         shared_with_user = result.scalar_one_or_none()
 
+        # Resolve key info
+        result = await self.db.execute(
+            select(ApiKey).where(ApiKey.id == share.key_id)
+        )
+        api_key = result.scalar_one_or_none()
+
         return ShareResponse(
             id=str(share.id),
             key_id=str(share.key_id),
+            key_label=api_key.label if api_key else "unknown",
+            key_provider=api_key.provider if api_key else "unknown",
+            masked_key=f"{api_key.key_prefix}...****{api_key.last_4}" if api_key else "unknown",
             shared_by_email=shared_by_user.email if shared_by_user else "unknown",
             shared_with_email=shared_with_user.email if shared_with_user else "unknown",
             permission=share.permission,
