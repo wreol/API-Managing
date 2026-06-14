@@ -20,11 +20,12 @@ export default function TeamPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [sharesRes, keysRes] = await Promise.all([
-        apiClient.get<KeyShare[]>('/team/shares'),
+      const [sentRes, receivedRes, keysRes] = await Promise.all([
+        apiClient.get<KeyShare[]>('/team/shares', { params: { direction: 'sent' } }),
+        apiClient.get<KeyShare[]>('/team/shares', { params: { direction: 'received' } }),
         apiClient.get<ApiKey[]>('/keys'),
       ]);
-      setShares(sharesRes.data);
+      setShares([...sentRes.data, ...receivedRes.data]);
       setKeys(keysRes.data);
     } catch (err: unknown) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
