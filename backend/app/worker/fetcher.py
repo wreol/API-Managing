@@ -90,7 +90,8 @@ async def fetch_all_usage(ctx: dict) -> dict:
     return {"status": "ok", "keys_processed": keys_processed}
 
 
-# ARQ settings — functions list and Redis config
+# ARQ settings — functions, cron, and Redis config
 class WorkerSettings:
     functions = [fetch_all_usage]
+    cron = {fetch_all_usage: "*/30 * * * *"}  # Run every 30 minutes
     redis_settings = RedisSettings.from_dsn(app_settings.REDIS_URL)

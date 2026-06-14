@@ -91,3 +91,16 @@ async def usage_by_key(
         from_date=from_date,
         to_date=to_date,
     )
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/usage/fetch — manually trigger usage data fetch
+# ---------------------------------------------------------------------------
+@router.post("/fetch")
+async def trigger_fetch(current_user: User = Depends(get_current_user)):
+    try:
+        from app.worker.fetcher import fetch_all_usage
+        result = await fetch_all_usage({})
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
