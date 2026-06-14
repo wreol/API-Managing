@@ -1,7 +1,7 @@
 # SPEC: API Vault — AI API 用量管理与监控平台
 
 > **Spec-Driven, Subagent-Built, Human-Owned.**  
-> 版本: v1.1 | 日期: 2026-06-14 | 状态: 已修订（冷启动验证后）
+> 版本: v1.2 | 日期: 2026-06-14 | 状态: 终版（全部实现完成）
 
 ---
 
