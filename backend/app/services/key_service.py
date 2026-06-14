@@ -9,11 +9,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.api_key import ApiKey
+import uuid
+from datetime import datetime, timedelta, timezone
+
+from app.models.alert_event import AlertEvent
+from app.models.alert_rule import AlertRule
 from app.models.key_share import KeyShare
 from app.models.user import User
 from app.providers.registry import ProviderRegistry
 from app.schemas.api_key import KeyResponse, KeyDetailResponse, KeyCopyResponse
 from app.services.encryption_service import EncryptionService
+from app.utils.email import send_email
 
 
 def _get_encryption_service() -> EncryptionService:
@@ -220,11 +226,54 @@ class KeyService:
         except KeyError:
             result = {"status": "error", "message": f"Unknown provider: {api_key.provider}"}
 
-        # Update key status based on test result
-        api_key.status = "ok" if result.get("status") == "ok" else "error"
+        was_ok = api_key.status == "ok"
+        is_ok = result.get("status") == "ok"
+
+        api_key.status = "ok" if is_ok else "error"
         await self.db.flush()
 
+        # Trigger alert if key just failed
+        if was_ok and not is_ok:
+            rules_result = await self.db.execute(
+                select(AlertRule).where(
+                    and_(AlertRule.key_id == api_key.id, AlertRule.is_active == True)
+                )
+            )
+            rules = rules_result.scalars().all()
+
+            for rule in rules:
+                # Skip if already triggered within 24h
+                cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+                recent = await self.db.execute(
+                    select(AlertEvent.id).where(
+                        and_(AlertEvent.rule_id == rule.id, AlertEvent.triggered_at >= cutoff)
+                    ).limit(1)
+                )
+                if recent.scalar_one_or_none():
+                    continue
+
+                message = (
+                    f"Key '{api_key.label}' ({api_key.provider}) failed connection test. "
+                    f"{result.get('message', '')}"
+                )
+                event = AlertEvent(
+                    id=uuid.uuid4(), rule_id=rule.id, message=message,
+                    is_read=False, email_sent=False,
+                )
+                self.db.add(event)
+                await self.db.flush()
+
+                email_ok = await send_email(
+                    to=rule.notify_email,
+                    subject=f"API Vault Alert: Key '{api_key.label}' is down",
+                    body=message,
+                )
+                if email_ok:
+                    event.email_sent = True
+                    await self.db.flush()
+
         result["provider"] = api_key.provider
+        result["alert_triggered"] = was_ok and not is_ok
         return result
 
     # ------------------------------------------------------------------
