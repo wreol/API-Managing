@@ -91,6 +91,9 @@ export interface AlertEvent {
 export interface KeyShare {
   id: string;
   key_id: string;
+  key_label: string;
+  key_provider: string;
+  masked_key: string;
   shared_by_email: string;
   shared_with_email: string;
   permission: string;

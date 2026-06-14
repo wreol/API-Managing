@@ -67,7 +67,7 @@ export default function OnboardingPage() {
         label: formLabel,
         key_value: formKeyValue,
       });
-      setKeys((prev) => [...prev, { id: 'temp', provider: formProvider, label: formLabel, masked_key: '', tags: [], status: 'ok', is_active: true } as ApiKey]);
+      setKeys((prev) => [...prev, { id: 'temp', provider: formProvider, label: formLabel, masked_key: '', tags: [], status: 'ok', is_active: true, permission: null } as ApiKey]);
       setStep(3);
     } catch (err: unknown) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;

@@ -111,8 +111,8 @@ export default function TeamPage() {
             <table>
               <thead>
                 <tr>
+                  <th>Key</th>
                   <th>Shared With</th>
-                  <th>Key ID</th>
                   <th>Permission</th>
                   <th>Actions</th>
                 </tr>
@@ -120,10 +120,11 @@ export default function TeamPage() {
               <tbody>
                 {sentShares.map((s) => (
                   <tr key={s.id}>
-                    <td>{s.shared_with_email}</td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                      {s.key_id.slice(0, 12)}...
+                    <td>
+                      <div>{s.key_label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{s.masked_key}</div>
                     </td>
+                    <td>{s.shared_with_email}</td>
                     <td>
                       <span className={`badge ${s.permission === 'use' ? 'badge-accent' : 'badge-default'}`}>
                         {s.permission}
@@ -158,18 +159,19 @@ export default function TeamPage() {
             <table>
               <thead>
                 <tr>
+                  <th>Key</th>
                   <th>Shared By</th>
-                  <th>Key ID</th>
                   <th>Permission</th>
                 </tr>
               </thead>
               <tbody>
                 {receivedShares.map((s) => (
                   <tr key={s.id}>
-                    <td>{s.shared_by_email}</td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                      {s.key_id.slice(0, 12)}...
+                    <td>
+                      <div>{s.key_label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{s.masked_key}</div>
                     </td>
+                    <td>{s.shared_by_email}</td>
                     <td>
                       <span className={`badge ${s.permission === 'use' ? 'badge-accent' : 'badge-default'}`}>
                         {s.permission}
