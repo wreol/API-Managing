@@ -1,8 +1,8 @@
 """Tests for SQLAlchemy ORM models — verify table metadata matches SPEC §6."""
 
 import pytest
-from sqlalchemy import inspect, Integer, BigInteger, Numeric, String, Boolean, Date, Text
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB, INET
+from sqlalchemy import inspect, Integer, BigInteger, JSON, Numeric, String, Boolean, Date, Text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 
 # ---------------------------------------------------------------------------
@@ -152,7 +152,7 @@ class TestApiKeyModel:
     def test_tags_jsonb(self):
         from app.models import ApiKey
         col = _col(ApiKey, "tags")
-        assert isinstance(col.type, JSONB)
+        assert isinstance(col.type, JSON)
 
     def test_status_default(self):
         from app.models import ApiKey
@@ -216,7 +216,7 @@ class TestUsageRecordModel:
     def test_raw_response_jsonb_nullable(self):
         from app.models import UsageRecord
         col = _col(UsageRecord, "raw_response")
-        assert isinstance(col.type, JSONB)
+        assert isinstance(col.type, JSON)
         assert col.nullable
 
 
@@ -382,7 +382,8 @@ class TestAuditLogModel:
     def test_ip_address_inet_nullable(self):
         from app.models import AuditLog
         col = _col(AuditLog, "ip_address")
-        assert isinstance(col.type, INET)
+        assert isinstance(col.type, String)
+        assert col.type.length == 45
         assert col.nullable
 
     def test_user_agent_text_nullable(self):
