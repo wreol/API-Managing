@@ -58,8 +58,11 @@ class KeyService:
 
         return KeyResponse(
             id=str(api_key.id),
+            provider=api_key.provider,
             label=api_key.label,
             masked_key=EncryptionService.mask_key(prefix, last_4),
+            status=api_key.status,
+            permission=None,
         )
 
     # ------------------------------------------------------------------
@@ -98,6 +101,7 @@ class KeyService:
                 provider=k.provider,
                 label=k.label,
                 masked_key=enc_svc.mask_key(k.key_prefix, k.last_4),
+                status=k.status,
                 permission=None,  # owner
             ))
             seen.add(k.id)
@@ -109,6 +113,7 @@ class KeyService:
                     provider=k.provider,
                     label=k.label,
                     masked_key=enc_svc.mask_key(k.key_prefix, k.last_4),
+                    status=k.status,
                     permission=perm,  # "read" or "use"
                 ))
                 seen.add(k.id)
@@ -159,6 +164,7 @@ class KeyService:
             masked_key=EncryptionService.mask_key(
                 api_key.key_prefix, api_key.last_4
             ),
+            status=api_key.status,
             permission=None,
         )
 
