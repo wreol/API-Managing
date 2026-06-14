@@ -24,7 +24,7 @@ class AlertEvent(Base):
     triggered_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=func.now()
     )
-    threshold_pct: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
+    threshold_pct: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True, default=None)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     email_sent: Mapped[bool] = mapped_column(Boolean, default=False)
