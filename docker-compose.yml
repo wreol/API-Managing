@@ -19,7 +19,7 @@ services:
     depends_on: [backend]
   worker:
     build: ./backend
-    command: arq backend.app.worker.fetcher.WorkerSettings
+    command: arq app.worker.fetcher.WorkerSettings
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/api_vault
       - REDIS_URL=redis://redis:6379/0
