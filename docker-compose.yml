@@ -1,0 +1,51 @@
+version: "3.8"
+services:
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/api_vault
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-me-in-production}
+      - KEY_ENCRYPTION_KEY=${KEY_ENCRYPTION_KEY:-change-me-change-me-change-me32}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  frontend:
+    build: ./frontend
+    ports: ["80:80"]
+    depends_on: [backend]
+  worker:
+    build: ./backend
+    command: arq backend.app.worker.fetcher.WorkerSettings
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/api_vault
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-me-in-production}
+      - KEY_ENCRYPTION_KEY=${KEY_ENCRYPTION_KEY:-change-me-change-me-change-me32}
+    depends_on: [db, redis]
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=api_vault
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+volumes:
+  pgdata:
