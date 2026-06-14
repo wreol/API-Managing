@@ -1,5 +1,35 @@
 # AGENT_LOG.md — 智能体使用过程记录
 
+## Commit 来源清单
+
+> 满足课程要求：每个 commit 标注 subagent 实现或人工修改
+
+| Commit | Phase | 来源 | 说明 |
+|--------|-------|:--:|------|
+| aa01dc1 | T0.1 | 人工 | Backend scaffold |
+| bad2c45 | T0.2 | 人工 | Frontend scaffold |
+| 4008ddd | T1.1 | Subagent | ORM Models |
+| dccad5e | T1.2 | Subagent | Alembic migrations |
+| (cold-start) | T2.1 | Subagent | Encryption service，与主 agent 不同类型 |
+| ff41b33 | T2.2 | Subagent | Auth service + API |
+| bbe37db | T3.1 | Subagent | Key Vault CRUD + 加密 |
+| 82599ec | T4.1-T4.6 | Subagent | Provider Engine |
+| e4798d5 | T5.1-T6.1 | Subagent | Usage / Worker / Alert |
+| aa1ec60 | T7.1 | Subagent | Team Sharing（人工 commit，连接中断） |
+| cfd2dd3 | T8.0-T8.5 | Subagent | Frontend 全部页面 |
+| 828fcea | T9.1/T9.3 | 人工 | Docker + README + REFLECTION |
+| a25ac35 | CI | 人工 | CI fix: aiosqlite |
+| 35eade1 | CI | 人工 | CI fix: redis |
+| 4705006 | CI | 人工 | CI fix: pytest |
+| c73b6c8 | CI | 人工 | CI fix: relax pins |
+| 0b8749d | Bugfix | 人工 | INET/JSONB 类型修复 |
+| d544453 | Bugfix | 人工 | ProviderRegistry 单例修复 |
+| 73a9d76 | Bugfix | 人工 | replace placeholder providers |
+| 57f9a18 | Feature | 人工 | Test Connection 触发告警 |
+| 其余 25+ | Bugfix/Feature | 人工 | 共享权限、Dashboard、邮件等 |
+
+---
+
 ## 2026-06-14 — Brainstorming & 规约阶段
 
 ### Brainstorming (Superpowers brainstorming skill)

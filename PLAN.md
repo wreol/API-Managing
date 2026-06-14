@@ -157,7 +157,7 @@ api-vault/
 
 ---
 
-### Task 0.1: Initialize backend project structure
+### Task 0.1: Initialize backend project structure ✅ [aa01dc1]
 
 **Files:**
 - Create: `backend/requirements.txt`
@@ -328,7 +328,7 @@ git commit -m "chore: scaffold backend project structure"
 
 ---
 
-### Task 0.2: Initialize frontend project structure
+### Task 0.2: Initialize frontend project structure ✅ [bad2c45]
 
 **Files:**
 - Create: `frontend/package.json`
@@ -724,7 +724,7 @@ git commit -m "chore: add Alembic migrations with initial schema"
 
 ## Phase 2: Encryption & Auth (M1)
 
-### Task 2.1: Implement encryption service
+### Task 2.1: Implement encryption service ✅ [cold-start]
 
 **Files:**
 - Create: `backend/app/services/__init__.py`
@@ -849,7 +849,7 @@ git commit -m "feat: add AES-256-GCM encryption service with key masking"
 
 ---
 
-### Task 2.2: Implement auth service (register, login, JWT, OAuth)
+### Task 2.2: Implement auth service (register, login, JWT, OAuth) ✅ [ff41b33]
 
 **Files:**
 - Create: `backend/app/services/auth_service.py`
@@ -1171,7 +1171,7 @@ git commit -m "feat: implement auth (register/login/JWT/deps)"
 
 ## Phase 3: Key Vault (M2)
 
-### Task 3.1: Implement key service with CRUD + encryption + masking
+### Task 3.1: Implement key service with CRUD + encryption + masking ✅ [bbe37db]
 
 **Files:**
 - Create: `backend/app/services/key_service.py`
@@ -1185,7 +1185,7 @@ git commit -m "feat: implement auth (register/login/JWT/deps)"
 
 ---
 
-### Task 3.2: Implement audit logging service and middleware
+### Task 3.2: Implement audit logging service and middleware ✅ [bbe37db]
 
 **Files:**
 - Create: `backend/app/services/audit_service.py`
@@ -1197,7 +1197,7 @@ git commit -m "feat: implement auth (register/login/JWT/deps)"
 
 ## Phase 4: Provider Engine (M3)
 
-### Task 4.1: Implement BaseProvider + Registry
+### Task 4.1: Implement BaseProvider + Registry ✅ [82599ec]
 
 **Files:**
 - Create: `backend/app/providers/__init__.py`
@@ -1267,7 +1267,7 @@ class ProviderRegistry:
 
 ---
 
-### Task 4.2: Implement OpenAI provider
+### Task 4.2: Implement OpenAI provider ✅ [82599ec]
 
 **Files:**
 - Create: `backend/app/providers/openai.py`
@@ -1344,7 +1344,7 @@ class OpenAIProvider(BaseProvider):
 
 ---
 
-### Task 4.3: Implement Anthropic provider
+### Task 4.3: Implement Anthropic provider ✅ [82599ec]
 
 **Files:** Create: `backend/app/providers/anthropic.py`
 
@@ -1354,7 +1354,7 @@ Same TDD pattern as T4.2. Auth via `x-api-key` header. Usage from Anthropic's bi
 
 ---
 
-### Task 4.4: Implement DeepSeek provider
+### Task 4.4: Implement DeepSeek provider ✅ [82599ec]
 
 **Files:** Create: `backend/app/providers/deepseek.py`
 
@@ -1364,7 +1364,7 @@ Same TDD pattern. Auth via `Authorization: Bearer`. Usage endpoint matches DeepS
 
 ---
 
-### Task 4.5: Implement Generic/Custom provider
+### Task 4.5: Implement Generic/Custom provider ✅ [82599ec]
 
 **Files:** Create: `backend/app/providers/generic.py`
 
@@ -1374,7 +1374,7 @@ Supports user-configured REST API adapters. Takes config from database, construc
 
 ---
 
-### Task 4.6: Implement Provider API endpoints (list + custom CRUD)
+### Task 4.6: Implement Provider API endpoints (list + custom CRUD) ✅ [82599ec]
 
 **Files:**
 - Create: `backend/app/schemas/provider.py`
@@ -1386,7 +1386,7 @@ Supports user-configured REST API adapters. Takes config from database, construc
 
 ## Phase 5: Background Worker & Usage Data (M4 backend)
 
-### Task 5.1: Implement usage service (DB queries + aggregation)
+### Task 5.1: Implement usage service (DB queries + aggregation) ✅ [e4798d5]
 
 **Files:**
 - Create: `backend/app/services/usage_service.py`
@@ -1398,7 +1398,7 @@ Supports user-configured REST API adapters. Takes config from database, construc
 
 ---
 
-### Task 5.2: Implement ARQ background worker (fetcher + alert evaluator)
+### Task 5.2: Implement ARQ background worker (fetcher + alert evaluator) ✅ [e4798d5]
 
 **Files:**
 - Create: `backend/app/worker/__init__.py`
@@ -1424,7 +1424,7 @@ async def fetch_all_usage(ctx):
 
 ## Phase 6: Alert Engine (M5)
 
-### Task 6.1: Implement alert service (rules CRUD + evaluation + email)
+### Task 6.1: Implement alert service (rules CRUD + evaluation + email) ✅ [e4798d5]
 
 **Files:**
 - Create: `backend/app/services/alert_service.py`
@@ -1441,7 +1441,7 @@ Key constraint: user must have verified email to create rules. 24h dedup logic.
 
 ## Phase 7: Team Sharing (M6)
 
-### Task 7.1: Implement team sharing service
+### Task 7.1: Implement team sharing service ✅ [aa1ec60]
 
 **Files:**
 - Create: `backend/app/services/team_service.py`
@@ -1457,7 +1457,7 @@ Key constraint: user must have verified email to create rules. 24h dedup logic.
 
 > **强制规则**：每个前端 task 的 Step 1 必须调用对应的 Open Design skill 生成设计稿，确认设计后再写代码。Step 2+ 为 TDD 实现。每完成 2-3 个页面后触发 `critique` 审查。
 
-### Task 8.0: Landing Page (saas-landing)
+### Task 8.0: Landing Page (saas-landing) ✅ [cfd2dd3]
 
 **Files:**
 - Create: `frontend/src/pages/LandingPage.tsx`
@@ -1468,7 +1468,7 @@ Key constraint: user must have verified email to create rules. 24h dedup logic.
 
 ---
 
-### Task 8.1: Layout component + Auth pages (web-prototype)
+### Task 8.1: Layout component + Auth pages (web-prototype) ✅ [cfd2dd3]
 
 **Files:**
 - Create: `frontend/src/components/Layout.tsx`
@@ -1482,7 +1482,7 @@ Key constraint: user must have verified email to create rules. 24h dedup logic.
 
 ---
 
-### Task 8.2: Dashboard page with usage charts (dashboard) ⭐ 视觉核心
+### Task 8.2: Dashboard page with usage charts (dashboard) ⭐ 视觉核心 ✅ [cfd2dd3]
 
 **Files:**
 - Create: `frontend/src/pages/DashboardPage.tsx`
@@ -1495,7 +1495,7 @@ Key constraint: user must have verified email to create rules. 24h dedup logic.
 
 ---
 
-### Task 8.3: Keys management pages (web-prototype)
+### Task 8.3: Keys management pages (web-prototype) ✅ [cfd2dd3]
 
 **Files:**
 - Create: `frontend/src/pages/KeysPage.tsx`
@@ -1508,7 +1508,7 @@ Key constraint: user must have verified email to create rules. 24h dedup logic.
 
 ---
 
-### Task 8.4: Alerts, Team, Providers, Onboarding pages (web-prototype)
+### Task 8.4: Alerts, Team, Providers, Onboarding pages (web-prototype) ✅ [cfd2dd3]
 
 **Files:**
 - Create: `frontend/src/pages/AlertsPage.tsx`
@@ -1523,7 +1523,7 @@ Key constraint: user must have verified email to create rules. 24h dedup logic.
 
 ---
 
-### Task 8.5: Design Critique & Polish (critique + tweaks)
+### Task 8.5: Design Critique & Polish (critique + tweaks) ✅ [cfd2dd3]
 
 **何时触发**：T8.1+T8.2 完成后一次；T8.3+T8.4 完成后一次；全部页面完成后最终审查。
 
@@ -1542,7 +1542,7 @@ Key constraint: user must have verified email to create rules. 24h dedup logic.
 
 ## Phase 9: Docker, CI, Docs
 
-### Task 9.1: Docker Compose + Dockerfiles
+### Task 9.1: Docker Compose + Dockerfiles ✅ [828fcea]
 
 **Files:**
 - Create: `docker-compose.yml`
@@ -1554,7 +1554,7 @@ Key constraint: user must have verified email to create rules. 24h dedup logic.
 
 ---
 
-### Task 9.2: GitHub Actions CI
+### Task 9.2: GitHub Actions CI ✅ [c73b6c8]
 
 **Files:**
 - Create: `.github/workflows/ci.yml`
@@ -1596,7 +1596,7 @@ jobs:
 
 ---
 
-### Task 9.3: README.md + final documentation
+### Task 9.3: README.md + final documentation ✅ [828fcea]
 
 **Files:**
 - Create: `README.md`
