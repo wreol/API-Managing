@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   backend:
     build: ./backend
@@ -8,6 +7,9 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-me-in-production}
       - KEY_ENCRYPTION_KEY=${KEY_ENCRYPTION_KEY:-change-me-change-me-change-me32}
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_FROM=noreply@apivault.dev
     depends_on:
       db:
         condition: service_healthy
@@ -25,7 +27,13 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-me-in-production}
       - KEY_ENCRYPTION_KEY=${KEY_ENCRYPTION_KEY:-change-me-change-me-change-me32}
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_FROM=noreply@apivault.dev
     depends_on: [db, redis]
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports: ["8025:8025", "1025:1025"]
   db:
     image: postgres:15-alpine
     environment:
