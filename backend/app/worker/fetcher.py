@@ -14,33 +14,10 @@ from app.database import async_session
 from app.models.api_key import ApiKey
 from app.models.usage_record import UsageRecord as UsageRecordModel
 from app.providers import ProviderRegistry
-from app.providers.openai import OpenAIProvider
-from app.providers.anthropic import AnthropicProvider
-from app.providers.deepseek import DeepSeekProvider
-from app.providers.generic import GenericProvider
 from app.services.encryption_service import EncryptionService
 import hashlib
 import uuid
 from sqlalchemy import select
-
-
-def _build_registry() -> ProviderRegistry:
-    """Build the provider registry with all built-in and custom providers."""
-    registry = ProviderRegistry()
-    registry.register(OpenAIProvider())
-    registry.register(AnthropicProvider())
-    registry.register(DeepSeekProvider())
-
-    # Register persisted custom providers from the global registry
-    for name in ProviderRegistry.list_providers():
-        if name not in ("openai", "anthropic", "deepseek"):
-            try:
-                provider = ProviderRegistry.get(name)
-                registry.register(provider)
-            except KeyError:
-                pass
-
-    return registry
 
 
 def _decrypt_key(encrypted_value: str) -> str:
@@ -57,7 +34,6 @@ async def fetch_all_usage(ctx: dict) -> dict:
 
     Called by ARQ on a schedule (e.g. every PROVIDER_FETCH_INTERVAL_MINUTES).
     """
-    registry = _build_registry()
     keys_processed = 0
 
     async with async_session() as db:
@@ -67,7 +43,7 @@ async def fetch_all_usage(ctx: dict) -> dict:
         api_keys = result.scalars().all()
 
         for api_key in api_keys:
-            provider = registry.get(api_key.provider)
+            provider = ProviderRegistry.get(api_key.provider)
             if provider is None:
                 continue
 

@@ -1,4 +1,4 @@
-"""ProviderRegistry — tracks registered provider instances."""
+"""ProviderRegistry — singleton registry of all provider instances."""
 
 from __future__ import annotations
 
@@ -6,23 +6,22 @@ from app.providers.base import BaseProvider
 
 
 class ProviderRegistry:
-    """A simple registry that holds provider instances keyed by provider_name."""
+    """Singleton registry holding provider instances keyed by provider_name."""
 
-    def __init__(self) -> None:
-        self._providers: dict[str, BaseProvider] = {}
+    _providers: dict[str, BaseProvider] = {}
 
-    def register(self, provider: BaseProvider) -> None:
-        """Add or replace a provider in the registry."""
-        self._providers[provider.provider_name] = provider
+    @classmethod
+    def register(cls, provider: BaseProvider) -> None:
+        cls._providers[provider.provider_name] = provider
 
-    def get(self, name: str) -> BaseProvider | None:
-        """Retrieve a provider by name, or None if not registered."""
-        return self._providers.get(name)
+    @classmethod
+    def get(cls, name: str) -> BaseProvider | None:
+        return cls._providers.get(name)
 
-    def list(self) -> list[BaseProvider]:
-        """Return all registered providers."""
-        return list(self._providers.values())
+    @classmethod
+    def list_providers(cls) -> list[str]:
+        return list(cls._providers.keys())
 
-    def remove(self, name: str) -> None:
-        """Remove a provider from the registry by name."""
-        self._providers.pop(name, None)
+    @classmethod
+    def remove(cls, name: str) -> None:
+        cls._providers.pop(name, None)
