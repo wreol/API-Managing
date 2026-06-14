@@ -41,7 +41,6 @@ export default function DashboardPage() {
   const okKeys = keys.filter((k) => k.status === 'ok');
   const errorKeys = keys.filter((k) => k.status === 'error');
   const ownedKeys = keys.filter((k) => k.permission === null);
-  const sharedKeys = keys.filter((k) => k.permission !== null);
 
   return (
     <div className="page-container">
