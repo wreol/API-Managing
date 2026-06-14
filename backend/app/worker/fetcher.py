@@ -98,8 +98,13 @@ async def fetch_all_usage(ctx: dict) -> dict:
     return {"status": "ok", "keys_processed": keys_processed}
 
 
+from app.worker.alert_evaluator import evaluate_alerts
+
 # ARQ settings — functions, cron, and Redis config
 class WorkerSettings:
-    functions = [fetch_all_usage]
-    cron = {fetch_all_usage: "*/30 * * * *"}  # Run every 30 minutes
+    functions = [fetch_all_usage, evaluate_alerts]
+    cron = {
+        fetch_all_usage: "*/30 * * * *",    # Fetch usage every 30 min
+        evaluate_alerts: "*/15 * * * *",    # Check key health every 15 min
+    }
     redis_settings = RedisSettings.from_dsn(app_settings.REDIS_URL)

@@ -43,11 +43,8 @@ async def create_rule(
     alert_service = AlertService(db)
     return await alert_service.create_rule(
         user=current_user,
-        type=body.type,
-        threshold=body.threshold,
-        notify_email=body.notify_email,
-        provider=body.provider,
         key_id=body.key_id,
+        notify_email=body.notify_email,
     )
 
 
