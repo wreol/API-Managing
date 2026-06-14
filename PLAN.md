@@ -560,7 +560,7 @@ git commit -m "chore: scaffold frontend project with Vite + React + TypeScript"
 
 ## Phase 1: Backend Core Infrastructure
 
-### Task 1.1: Create all SQLAlchemy ORM models
+### Task 1.1: Create all SQLAlchemy ORM models ✅ [4008ddd]
 
 **Files:**
 - Create: `backend/app/models/__init__.py`
@@ -684,7 +684,7 @@ git commit -m "feat: add all SQLAlchemy ORM models (7 tables)"
 
 ---
 
-### Task 1.2: Set up Alembic for database migrations
+### Task 1.2: Set up Alembic for database migrations ✅ [dccad5e]
 
 **Files:**
 - Create: `backend/alembic.ini`
