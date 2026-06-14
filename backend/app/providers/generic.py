@@ -59,6 +59,22 @@ class GenericProvider(BaseProvider):
 
         return self.normalize_response(response.json())
 
+    async def test_connection(self, api_key: str) -> dict:
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    self.base_url,
+                    headers=self.auth_headers(api_key),
+                    timeout=10.0,
+                )
+            if resp.status_code < 500:
+                return {"status": "ok", "message": f"Connected ({resp.status_code})"}
+            return {"status": "error", "message": f"Server error: {resp.status_code}"}
+        except httpx.TimeoutException:
+            return {"status": "error", "message": "Connection timed out"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
     def normalize_response(self, raw: dict) -> UsageRecord:
         def _get(field: str, default=0):
             key = self._field_mapping.get(field)

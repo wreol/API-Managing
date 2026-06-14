@@ -39,6 +39,13 @@ class BaseProvider(ABC):
         """Fetch usage data from the provider for the given date."""
         ...
 
+    async def test_connection(self, api_key: str) -> dict:
+        """Verify an API key is valid by making a lightweight request.
+
+        Returns: {"status": "ok", "message": "..."} or {"status": "error", "message": "..."}
+        """
+        raise NotImplementedError
+
     def normalize_response(self, raw: dict) -> UsageRecord:
         """Convert a raw provider response into a standardized UsageRecord."""
         raise NotImplementedError

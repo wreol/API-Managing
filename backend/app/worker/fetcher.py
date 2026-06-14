@@ -25,13 +25,21 @@ from sqlalchemy import select
 
 
 def _build_registry() -> ProviderRegistry:
-    """Build the provider registry with all built-in providers."""
+    """Build the provider registry with all built-in and custom providers."""
     registry = ProviderRegistry()
     registry.register(OpenAIProvider())
     registry.register(AnthropicProvider())
     registry.register(DeepSeekProvider())
 
-    # TODO: Register persisted custom providers from the database
+    # Register persisted custom providers from the global registry
+    for name in ProviderRegistry.list_providers():
+        if name not in ("openai", "anthropic", "deepseek"):
+            try:
+                provider = ProviderRegistry.get(name)
+                registry.register(provider)
+            except KeyError:
+                pass
+
     return registry
 
 

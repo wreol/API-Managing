@@ -355,7 +355,8 @@ class TestAnthropicProvider:
 
         provider = AnthropicProvider()
         headers = provider.auth_headers("sk-ant-api03-secret")
-        assert headers == {"x-api-key": "sk-ant-api03-secret"}
+        assert headers["x-api-key"] == "sk-ant-api03-secret"
+        assert "anthropic-version" in headers
 
     def test_anthropic_provider_attributes(self):
         """Anthropic provider has correct name and attributes."""

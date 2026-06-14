@@ -11,6 +11,7 @@ from app.config import settings
 from app.models.api_key import ApiKey
 from app.models.key_share import KeyShare
 from app.models.user import User
+from app.providers.registry import ProviderRegistry
 from app.schemas.api_key import KeyResponse, KeyDetailResponse, KeyCopyResponse
 from app.services.encryption_service import EncryptionService
 
@@ -195,13 +196,13 @@ class KeyService:
         except ValueError:
             return {"status": "error", "message": "Failed to decrypt key"}
 
-        # In a real implementation, this would make an HTTP request to the
-        # provider API using the decrypted key. For now, return a placeholder.
-        return {
-            "status": "ok",
-            "provider": api_key.provider,
-            "message": f"Connection test not implemented for {api_key.provider}",
-        }
+        try:
+            provider = ProviderRegistry.get(api_key.provider)
+            result = await provider.test_connection(decrypted)
+        except KeyError:
+            result = {"status": "error", "message": f"Unknown provider: {api_key.provider}"}
+        result["provider"] = api_key.provider
+        return result
 
     # ------------------------------------------------------------------
     # Helpers

@@ -39,6 +39,24 @@ class OpenAIProvider(BaseProvider):
 
         return self.normalize_response(response.json())
 
+    async def test_connection(self, api_key: str) -> dict:
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    f"{self.base_url}/v1/models",
+                    headers=self.auth_headers(api_key),
+                    timeout=10.0,
+                )
+            if resp.status_code == 200:
+                return {"status": "ok", "message": "OpenAI API key is valid"}
+            if resp.status_code == 401:
+                return {"status": "error", "message": "Invalid API key"}
+            return {"status": "error", "message": f"Unexpected response: {resp.status_code}"}
+        except httpx.TimeoutException:
+            return {"status": "error", "message": "Connection timed out"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
     def normalize_response(self, raw: dict) -> UsageRecord:
         cost_cents = raw.get("current_usage_usd", 0)
         return UsageRecord(
